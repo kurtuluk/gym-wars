@@ -50,11 +50,11 @@ export const getCurrentCycle = (): number => {
 };
 
 /**
- * DÖNGÜ AYARLARI (GÜNCELLENDİ)
- * 0 (Bugün): DÜELLO (Ayda 1 kez)
- * 1: Hazırlık
- * 2: Hazırlık
- * 3: BOSS (Ayda 1 kez)
+ * Cycle döngüsü (4 hafta)
+ * Modulo 0: DUEL WEEK (Bu hafta, Pazartesi başlangıç)
+ * Modulo 1: HAZIRLIK
+ * Modulo 2: HAZIRLIK
+ * Modulo 3: BOSS WEEK (Ayda 1 kez)
  */
 export const CYCLE_TYPES = {
   0: { id: 0, title: "DÜELLO", icon: "⚔️", desc: "Büyük Kapışma Haftası" },
@@ -97,30 +97,38 @@ export const calculateActivityScore = (
 
 /**
  * Sıralama hesapla (Eşitlik Bozulmadan - Tie Handling)
+ * Aynı puana sahip olanlar aynı sırayı alır.
  */
 export const calculateRanking = (users: any[], logs: any[], startDate: string) => {
-  const sorted = users.map((user) => {
-      const scores = calculateActivityScore(logs, user.id, startDate);
-      return { 
-        ...user, 
-        score: scores.total, 
-        gym: scores.gym, 
-        cardio: scores.cardio, 
-        subText: `${scores.gym} Gym + ${scores.cardio} Kardiyo` 
-      };
-    }).sort((a, b) => b.score - a.score);
+  // 1. Puanları Hesapla
+  const withScores = users.map((user) => {
+    const scores = calculateActivityScore(logs, user.id, startDate);
+    return {
+      ...user,
+      score: scores.total,
+      gym: scores.gym,
+      cardio: scores.cardio,
+      subText: `${scores.gym} Gym + ${scores.cardio} Kardiyo`,
+    };
+  });
 
-  return sorted.map((u, i) => {
+  // 2. Sırala
+  const sorted = withScores.sort((a, b) => b.score - a.score);
+
+  // 3. Rank Ata (Eşitlik durumunu gözeterek)
+  return sorted.map((user, index) => {
     let rank = 1;
-    if (i > 0) {
-      if (u.score === sorted[i - 1].score) {
-        rank = sorted[i - 1].rank;
+    if (index > 0) {
+      // Eğer puan bir öncekiyle aynıysa, onun rank'ını al
+      if (user.score === sorted[index - 1].score) {
+        rank = sorted[index - 1].rank;
       } else {
-        rank = i + 1;
+        // Değilse normal sırasını al (index + 1)
+        rank = index + 1;
       }
     }
-    u.rank = rank;
-    return u;
+    user.rank = rank;
+    return user;
   });
 };
 
@@ -130,7 +138,8 @@ export const calculateRanking = (users: any[], logs: any[], startDate: string) =
 export const getNameClasses = (user: any): string => {
   let classes = `font-bold text-sm flex items-center gap-2 ${user.name_color || 'text-white'}`;
   if (user.name_effect === 'rainbow')
-    classes += ' bg-gradient-to-r from-red-500 via-green-500 to-blue-500 text-transparent bg-clip-text animate-pulse';
+    classes +=
+      ' bg-gradient-to-r from-red-500 via-green-500 to-blue-500 text-transparent bg-clip-text animate-pulse';
   if (user.name_effect === 'ghost')
     classes += ' opacity-50 blur-[0.5px]';
   if (user.name_effect === 'glitch')
@@ -140,14 +149,26 @@ export const getNameClasses = (user: any): string => {
   return classes;
 };
 
+/**
+ * Tarih formatlama
+ */
 export const formatDate = (date: string | Date): string => {
   const d = new Date(date);
   return d.toLocaleDateString('tr-TR', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 };
 
+/**
+ * Kısa tarih
+ */
 export const formatShortDate = (date: string | Date): string => {
   const d = new Date(date);
-  return d.toLocaleDateString('tr-TR', { weekday: 'short', day: 'numeric' });
+  return d.toLocaleDateString('tr-TR', {
+    weekday: 'short',
+    day: 'numeric',
+  });
 };

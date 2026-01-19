@@ -110,17 +110,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Boss resetle (Ayda 1 kez - Pazartesi)
-    const isFirstMondayOfMonth = (date: Date) => {
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-      const monday = new Date(d.setDate(diff));
-      return monday.getDate() <= 7; // İlk haftanın pazartesi günü
-    };
-
-    if (isFirstMondayOfMonth(today)) {
-      // Ayın ilk pazartesi - Boss savaşı
+    // 5. Boss resetle (Modulo 3'te - 4 haftalık döngü)
+    const weekNum = getWeekNumber(today);
+    const cycle = weekNum % 4;
+    
+    if (cycle === 3) {
+      // Boss haftası - Boss savaşı
       const totalHP = users.length * 600;
 
       // Eski boss'u sil
@@ -133,7 +128,7 @@ export async function POST(req: NextRequest) {
         {
           week_start_date: thisWeekStart,
           group_id: groupId,
-          boss_name: 'AYLIKTAŞ BOSS 💀',
+          boss_name: 'BOSS HAFTASI 💀',
           hp_max: totalHP,
           hp_current: totalHP,
           is_defeated: false,
@@ -142,10 +137,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5.5. Düello Haftası Başlıyorsa - Eşleşmeler Sıfırla
-    const weekNum = getWeekNumber(today);
-    const cycle = weekNum % 4;
-    
-    if (cycle === 3) {
+    if (cycle === 0) {
       // Düello haftası başladı - eski eşleşmeleri sil
       const { data: oldDuels } = await supabase
         .from('duels')

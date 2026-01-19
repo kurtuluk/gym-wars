@@ -44,10 +44,10 @@ export default function Dashboard() {
   const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/avataaars/svg?seed=Felix"; // Yedek avatar
 
   const CYCLE_MAP = [
-    { id: 1, title: "HAZIRLIK", icon: "☮️", desc: "Normal Hafta" },
-    { id: 2, title: "BOSS I", icon: "👹", desc: "Boss Savaşı" },
-    { id: 3, title: "DÜELLO", icon: "⚔️", desc: "Büyük Kapışma" }, // 3. Hafta Düello
-    { id: 0, title: "BOSS II", icon: "💀", desc: "Final Boss" }, // 4. Hafta (Modülo 0)
+    { id: 0, title: "DÜELLO", icon: "⚔️", desc: "Büyük Kapışma Haftası" },
+    { id: 1, title: "HAZIRLIK", icon: "☮️", desc: "Dinlenme ve Antrenman" },
+    { id: 2, title: "HAZIRLIK", icon: "💪", desc: "Boss Öncesi Güçlenme" },
+    { id: 3, title: "BOSS", icon: "👹", desc: "Ayın Tek Boss Savaşı" },
   ];
 
   const RANKS = [
@@ -96,10 +96,10 @@ export default function Dashboard() {
     setCurrentCycle(cycle);
     
     let label = 'Normal Hafta';
-    if (cycle === 0) label = "FINAL BOSS";
+    if (cycle === 0) label = "DÜELLO";
     else if (cycle === 1) label = "HAZIRLIK";
-    else if (cycle === 2) label = "BOSS SAVAŞI";
-    else if (cycle === 3) label = "DÜELLO";
+    else if (cycle === 2) label = "HAZIRLIK";
+    else if (cycle === 3) label = "BOSS WEEK";
     setWeekInfo({ weekNum, label });
 
     const timer = setInterval(() => {
@@ -167,16 +167,18 @@ export default function Dashboard() {
       });
       setFallenHeroes(failedUsers);
 
-      // Haftalık Döngü Kontrolü
-      const weekNum = getWeekNumber(new Date());
+      // Haftalık döngüyü hesapla (4 haftalık modulo)
+      const today = new Date();
+      const weekNum = getWeekNumber(today);
       const cycle = weekNum % 4;
 
-      // 3. Hafta: Düello
-      if (cycle === 3) {
+      // Düello Haftası: Modulo 0
+      if (cycle === 0) {
           await loadActiveDuels(allUsersData || [], thisWeekStartStr, userGroup);
       }
-      // 2 veya 0 (4). Hafta: Boss
-      else if (cycle === 2 || cycle === 0) {
+
+      // Boss Haftası: Modulo 3
+      if (cycle === 3) {
           await handleBoss(allUsersData || [], thisWeekStartStr, userGroup);
       }
     }
@@ -473,7 +475,17 @@ export default function Dashboard() {
                {/* ÖZEL İTEMLER */}
                <div className="text-xs font-bold text-neutral-400 uppercase mb-2 mt-4">👑 Özel İtемleri</div>
                <button onClick={() => buyItem('perm_king_icon', 1000)} className="w-full bg-neutral-700 hover:bg-neutral-600 p-3 rounded flex justify-between text-sm border border-yellow-500"><span>👑 Kalıcı Kral İkonu</span><span className="text-yellow-500">1000 C</span></button>
-               <button onClick={() => {const target = prompt('Kimin ismini değiştirmek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('rename_user', 500, target);}} className="w-full bg-neutral-700 hover:bg-neutral-600 p-3 rounded flex justify-between text-sm border border-red-500"><span>👿 Troll - İsim Değiştir</span><span className="text-yellow-500">500 C</span></button>
+               
+               {/* TROLL/SİNİR EDİCİ ŞEYLER (24 SAATLİK) */}
+               <div className="text-xs font-bold text-red-500 uppercase mb-2 mt-4">😈 Troll Şeyler (24 Saat)</div>
+               <button onClick={() => {const target = prompt('Kimin ismini değiştirmek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('troll_rename_24h', 300, target);}} className="w-full bg-red-900/30 hover:bg-red-900/50 p-3 rounded flex justify-between text-sm border border-red-600"><span>📝 İsim Değiştir (24s)</span><span className="text-yellow-500">300 C</span></button>
+               <button onClick={() => {const target = prompt('Kimin status mesajını değiştirmek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('troll_status_24h', 300, target);}} className="w-full bg-red-900/30 hover:bg-red-900/50 p-3 rounded flex justify-between text-sm border border-red-600"><span>💬 Status Mesajı Değiştir (24s)</span><span className="text-yellow-500">300 C</span></button>
+               <button onClick={() => {const target = prompt('Kimin bio\'suna troll yazısı eklemek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('troll_bio_24h', 350, target);}} className="w-full bg-red-900/30 hover:bg-red-900/50 p-3 rounded flex justify-between text-sm border border-red-600"><span>🎭 Bio\'ya Troll Yazısı (24s)</span><span className="text-yellow-500">350 C</span></button>
+               <button onClick={() => {const target = prompt('Kinin profilini kilitlemek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('troll_lock_24h', 400, target);}} className="w-full bg-red-900/30 hover:bg-red-900/50 p-3 rounded flex justify-between text-sm border border-red-600"><span>🔒 Profili Kilitle (24s)</span><span className="text-yellow-500">400 C</span></button>
+               <button onClick={() => {const target = prompt('Kinin coinlerini çalıp 50 coin ver? (Kullanıcı adı)'); if (target) buyItem('troll_steal_coins', 350, target);}} className="w-full bg-red-900/30 hover:bg-red-900/50 p-3 rounded flex justify-between text-sm border border-red-600"><span>💸 Coin Çal (50 Coin Al)</span><span className="text-yellow-500">350 C</span></button>
+               
+               {/* ESKİ TROLLEME */}
+               <button onClick={() => {const target = prompt('Kimin ismini değiştirmek istiyorsun? (Kullanıcı adı)'); if (target) buyItem('rename_user', 500, target);}} className="w-full bg-neutral-700 hover:bg-neutral-600 p-3 rounded flex justify-between text-sm border border-red-500"><span>👿 Kalıcı İsim Değiştir</span><span className="text-yellow-500">500 C</span></button>
                
                {/* EMOJI SEÇER */}
                <div className="text-xs font-bold text-neutral-400 uppercase mb-2 mt-4">😎 Status Emoji (7 gün)</div>
@@ -490,7 +502,7 @@ export default function Dashboard() {
          <div className="flex gap-1 flex-wrap justify-center sm:justify-start">
             <button onClick={() => setShowStore(true)} className="flex items-center gap-1 bg-yellow-600/20 text-yellow-500 px-2 sm:px-3 py-1.5 rounded-full border border-yellow-600/50 text-xs font-bold whitespace-nowrap"><ShoppingCart size={14}/> Mağaza</button>
             {/* SADECE DÜELLO HAFTASINDA VE EŞLEŞME VARSA BAHİS BUTONU ÇIKAR */}
-            {currentCycle === 3 && activeDuels.length > 0 && (
+            {currentCycle === 0 && activeDuels.length > 0 && (
               <button onClick={() => setShowBets(true)} className="flex items-center gap-1 bg-green-600/20 text-green-500 px-2 sm:px-3 py-1.5 rounded-full border border-green-600/50 text-xs font-bold animate-pulse whitespace-nowrap"><TrendingUp size={14}/> Bahis</button>
             )}
             <button onClick={() => router.push('/leaderboard')} className="flex items-center gap-1 bg-purple-600/20 text-purple-500 px-2 sm:px-3 py-1.5 rounded-full border border-purple-600/50 text-xs font-bold whitespace-nowrap"><Trophy size={14}/> Sıralama</button>
@@ -501,24 +513,24 @@ export default function Dashboard() {
       <div className="px-4 space-y-6">
         
         {/* HAFTA BAŞLANDI MESAJI */}
-        {currentCycle === 3 && (
+        {currentCycle === 0 && (
           <div className="bg-gradient-to-r from-fuchsia-900/40 to-fuchsia-800/40 border border-fuchsia-500/50 rounded-2xl p-4 animate-pulse">
             <p className="text-fuchsia-300 font-bold text-center flex items-center justify-center gap-2">
               ⚔️ DÜELLO HAFTASI BAŞLADI! Savaş zamanı geldi!
             </p>
           </div>
         )}
-        {currentCycle === 2 && (
+        {currentCycle === 3 && (
           <div className="bg-gradient-to-r from-red-900/40 to-red-800/40 border border-red-500/50 rounded-2xl p-4 animate-pulse">
             <p className="text-red-300 font-bold text-center flex items-center justify-center gap-2">
-              👹 BOSS SAVAŞI BAŞLADI! Tüm güçleri birleştir!
+              💀 BOSS HAFTASI BAŞLADI! Tüm güçleri birleştir!
             </p>
           </div>
         )}
-        {currentCycle === 0 && (
-          <div className="bg-gradient-to-r from-purple-900/40 to-purple-800/40 border border-purple-500/50 rounded-2xl p-4 animate-pulse">
-            <p className="text-purple-300 font-bold text-center flex items-center justify-center gap-2">
-              💀 FINAL BOSS HAFTASI! İmsalı bir savaş!
+        {(currentCycle === 1 || currentCycle === 2) && (
+          <div className="bg-gradient-to-r from-green-900/40 to-green-800/40 border border-green-500/50 rounded-2xl p-4 animate-pulse">
+            <p className="text-green-300 font-bold text-center flex items-center justify-center gap-2">
+              ☮️ HAZIRLIK HAFTASI - Normal Antrenman! 💪
             </p>
           </div>
         )}
@@ -552,8 +564,8 @@ export default function Dashboard() {
 
         {/* --- DİNAMİK ALAN (HAFTAYA GÖRE DEĞİŞİR) --- */}
         
-        {/* 1. DÜELLO HAFTASI (3. Hafta) */}
-        {currentCycle === 3 && (
+        {/* 1. DÜELLO HAFTASI (Modulo 0) */}
+        {currentCycle === 0 && (
            <div className="space-y-4 animate-in slide-in-from-bottom">
               {/* LİDER İÇİN ÇARK */}
               {activeDuels.length === 0 ? (
@@ -593,8 +605,8 @@ export default function Dashboard() {
            </div>
         )}
 
-        {/* 2. BOSS SAVAŞI (0 veya 2. Hafta) */}
-        {(currentCycle === 0 || currentCycle === 2) && currentBoss && !currentBoss.is_defeated && (
+        {/* 2. BOSS SAVAŞI (Modulo 3 only) */}
+        {currentCycle === 3 && currentBoss && !currentBoss.is_defeated && (
            <div className="bg-red-900/20 border border-red-500/50 rounded-2xl p-4 relative overflow-hidden">
               <div className="flex justify-between items-center mb-2">
                  <h3 className="font-bold text-red-400 flex items-center gap-2"><Skull/> {currentBoss.boss_name}</h3>
@@ -645,12 +657,22 @@ export default function Dashboard() {
         {/* UTANÇ DUVARI */}
         {fallenHeroes.length > 0 && (
            <div className="bg-red-950/30 border border-red-900/50 rounded-2xl p-4">
-              <h3 className="text-red-500 font-bold flex items-center gap-2 mb-3"><AlertTriangle/> DÜŞENLER (4x Altı)</h3>
+              <h3 className="text-red-500 font-bold flex items-center gap-2 mb-3"><AlertTriangle/> DÜŞME RİSKİ (4x Altı)</h3>
               <div className="space-y-2">
                  {fallenHeroes.map(u => (
                     <div key={u.id} className="flex items-center justify-between bg-black/40 p-2 rounded-lg">
                        <span className="text-neutral-300">{u.username}</span>
-                       <span className="text-xs text-red-400 font-mono">Failed</span>
+                       {currentUser?.id === serverLeader?.id && (
+                         <button onClick={async () => {
+                           if (!confirm(`${u.username}'i riski listesinden çıkarmak istiyor musun?`)) return;
+                           await supabase.from('users').update({ in_court_risk: false }).eq('id', u.id);
+                           setFallenHeroes(fallenHeroes.filter(user => user.id !== u.id));
+                           alert("Çıkarıldı!");
+                         }} className="text-xs bg-green-600/30 text-green-400 px-2 py-1 rounded hover:bg-green-600/50">Çıkar</button>
+                       )}
+                       {currentUser?.id !== serverLeader?.id && (
+                         <span className="text-xs text-red-400 font-mono">Riski Var</span>
+                       )}
                     </div>
                  ))}
               </div>
