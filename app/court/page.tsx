@@ -13,6 +13,7 @@ export default function CourtPage() {
   const [loading, setLoading] = useState(true);
   const [isKing, setIsKing] = useState(false);
   const [penalties, setPenalties] = useState<any[]>([]);
+  const [allVotesComplete, setAllVotesComplete] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('currentUser');
@@ -29,6 +30,11 @@ export default function CourtPage() {
     const monday = new Date(today.setDate(diff));
     monday.setHours(0, 0, 0, 0);
     const weekStartStr = monday.toISOString().split('T')[0];
+
+    // Hafta numarası - 4. hafta mı?
+    const weekNum = Math.ceil(today.getDate() / 7);
+    const monthWeekNum = weekNum % 4 === 0 ? 4 : weekNum % 4;
+    const isFinalWeek = monthWeekNum === 0; // 4. haftanın başı - geçen hafta kontrol
 
     // Kullanıcı bilgisi
     const { data: user } = await supabase
@@ -48,7 +54,16 @@ export default function CourtPage() {
       .eq('group_id', user?.group_id || 'server_1')
       .order('created_at', { ascending: true });
 
-    setAllUsers(usersData || []);
+    // Sadece 4. haftada tamamlamayanları filtrele (cezası olanlar)
+    const { data: penaltiesData } = await supabase
+      .from('penalties')
+      .select('*')
+      .eq('week_start_date', weekStartStr);
+
+    const penaltyUserIds = new Set((penaltiesData || []).map((p) => p.user_id));
+    const filteredUsers = (usersData || []).filter((u) => penaltyUserIds.has(u.id));
+
+    setAllUsers(filteredUsers);
 
     // Kral verisi
     const { data: kingRaw } = await supabase
@@ -78,6 +93,21 @@ export default function CourtPage() {
       .eq('week_start_date', weekStartStr);
 
     setPenalties(penaltiesData || []);
+
+    // Tüm oylar verildi mi kontrol et
+    // Kural: Her ceza alan kişi için tüm diğer kullanıcılar oy vermeli
+    const { data: allGroupUsers } = await supabase
+      .from('users')
+      .select('*')
+      .eq('group_id', user?.group_id || 'server_1');
+
+    if (filteredUsers.length > 0 && allGroupUsers) {
+      const expectedVotes = filteredUsers.length * allGroupUsers.length * 2; // her kişi 2 oy tipi
+      const actualVotes = (votesData || []).length;
+      setAllVotesComplete(actualVotes >= expectedVotes);
+    } else {
+      setAllVotesComplete(false);
+    }
 
     setLoading(false);
   };
@@ -185,6 +215,15 @@ export default function CourtPage() {
       </div>
 
       <div className="px-4 space-y-6">
+        {/* OYLAMA TAMAMLANDI MESAJI */}
+        {allVotesComplete && (
+          <div className="bg-green-900/30 border border-green-500/50 rounded-2xl p-4">
+            <p className="text-green-400 font-bold text-center flex items-center justify-center gap-2">
+              ✅ Tüm oylar tamamlandı! Pazartesi mahkeme kapanacak.
+            </p>
+          </div>
+        )}
+
         {/* KRAL VERİSİ */}
         {kingData && (
           <div className="bg-gradient-to-r from-yellow-900/40 to-yellow-800/40 border border-yellow-500/50 rounded-2xl p-5">

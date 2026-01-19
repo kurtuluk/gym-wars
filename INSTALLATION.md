@@ -74,6 +74,9 @@ CREATE TABLE users (
   custom_title text,
   perm_king_icon boolean DEFAULT false,
   
+  -- Oyuncu Ayarları
+  streak_decay_mode text DEFAULT 'decrease',
+  
   -- Otomasyon Takibi
   last_weekly_process_date date,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now())

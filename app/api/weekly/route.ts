@@ -64,8 +64,12 @@ export async function POST(req: NextRequest) {
         if (userLogs.length >= 4) {
           newStreak += 1;
         } else {
-          // Streak sıfırla eğer hedefi tutturmadıysa
-          newStreak = 0;
+          // Hedefi tutturmadıysa, ayarlara göre davran
+          const decayMode = user.streak_decay_mode || 'decrease'; // default: decrease
+          if (decayMode === 'decrease') {
+            newStreak = 0; // Sıfıra dönüş (Zor Mod)
+          }
+          // 'freeze' modunda streak değişmez
         }
 
         // Streak güncellemesi
@@ -76,19 +80,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Boss resetle (yeni hafta)
-    const weekNum = getWeekNumber(today);
-    const cycle = weekNum % 4;
+    // 4. Boss resetle (Ayda 1 kez - Pazartesi)
+    const isFirstMondayOfMonth = (date: Date) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      return monday.getDate() <= 7; // İlk haftanın pazartesi günü
+    };
 
-    if (cycle === 2 || cycle === 0) {
-      // Boss haftası
+    if (isFirstMondayOfMonth(today)) {
+      // Ayın ilk pazartesi - Boss savaşı
       const totalHP = users.length * 600;
+
+      // Eski boss'u sil
+      await supabase
+        .from('raid_bosses')
+        .delete()
+        .eq('group_id', groupId);
 
       await supabase.from('raid_bosses').insert([
         {
           week_start_date: thisWeekStart,
           group_id: groupId,
-          boss_name: cycle === 0 ? 'FINAL BOSS 💀' : 'DEV GOLEM 👹',
+          boss_name: 'AYLIKTAŞ BOSS 💀',
           hp_max: totalHP,
           hp_current: totalHP,
           is_defeated: false,

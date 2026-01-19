@@ -90,10 +90,10 @@ export const calculateActivityScore = (
 };
 
 /**
- * Sıralama hesapla
+ * Sıralama hesapla (Tie handling ile - aynı score = aynı rank)
  */
 export const calculateRanking = (users: any[], logs: any[], startDate: string) => {
-  return users
+  const sorted = users
     .map((user) => {
       const scores = calculateActivityScore(logs, user.id, startDate);
       return {
@@ -104,8 +104,19 @@ export const calculateRanking = (users: any[], logs: any[], startDate: string) =
         subText: `${scores.gym} Gym + ${scores.cardio} Kardiyo`,
       };
     })
-    .sort((a, b) => b.score - a.score)
-    .map((u, i) => ({ ...u, rank: i + 1 }));
+    .sort((a, b) => b.score - a.score);
+
+  // Tie handling: aynı score'a sahip olanlar aynı rank alır
+  return sorted.map((u, i) => {
+    let rank = 1;
+    for (let j = i - 1; j >= 0; j--) {
+      if (sorted[j].score > u.score) {
+        rank = j + 2;
+        break;
+      }
+    }
+    return { ...u, rank };
+  });
 };
 
 /**
