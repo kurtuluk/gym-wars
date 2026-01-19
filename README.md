@@ -1,33 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏋️ GYM WARS - Oyunlaştırılmış Sosyal Fitness Uygulaması
 
-## Getting Started
+Arkadaşlarınla savaş, antrenman yap, **GymCoin** kazan ve **Black Market**'ten özel eşyalar satın al! Dark mode arayüzü ile 24/7 motivasyon.
 
-First, run the development server:
+## 🎮 Özellikler
 
+### 💪 Antrenman Sistemi
+- **Gym** ve **Kardio** etkinliklerini kaydet
+- Her aktivite için coin kazan (Gym: 10 coin, Kardio: 5 coin)
+- Antrenman notu ve resim ekle
+- Haftalık 4x Gym hedefini tut, streak kazan
+
+### 🎯 4 Haftalık Döngü
+- **Hafta 1**: ☮️ Hazırlık - Normal antrenman
+- **Hafta 2**: 👹 Boss Savaşı - Tüm sunucu ortak bir boss'a saldır
+- **Hafta 3**: ⚔️ Düello Haftası - Server Lideri çarkı çevirip 1v1 eşleşme yap
+- **Hafta 4**: 💀 Final Boss - Korkulu boss savaşı
+
+## 📦 Kurulum
+
+### 1. Repository'yi Clone Et
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd spor-takip
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Bağımlılıkları Yükle
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Environment Değişkenlerini Ayarla
+```bash
+cp .env.local.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Uygulamayı Başlat
+```bash
+npm run dev
+```
 
-## Learn More
+Tarayıcıda `http://localhost:3000` açın.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Teknoloji Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS 4
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Storage**: Supabase Storage
 
 ## Deploy on Vercel
 

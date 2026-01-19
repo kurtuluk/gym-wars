@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
-import { ArrowLeft, Save, Edit3, Calendar, Dumbbell, Heart } from 'lucide-react';
+import { ArrowLeft, Save, Edit3, Calendar, Dumbbell, Heart, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 export default function NotesPage() {
   const router = useRouter();
@@ -10,6 +10,8 @@ export default function NotesPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
@@ -18,16 +20,16 @@ export default function NotesPage() {
       return;
     }
     const user = JSON.parse(storedUser);
+    setCurrentUser(user);
     fetchHistory(user.id);
   }, []);
 
   const fetchHistory = async (userId: string) => {
-    // Tüm geçmişi tarihe göre (yeniden eskiye) çek
     const { data, error } = await supabase
       .from('activity_logs')
       .select('*')
       .eq('user_id', userId)
-      .order('activity_date', { ascending: false }); // En yeni en üstte
+      .order('activity_date', { ascending: false });
 
     if (data) setLogs(data);
     setLoading(false);
@@ -35,7 +37,7 @@ export default function NotesPage() {
 
   const startEditing = (log: any) => {
     setEditingId(log.id);
-    setEditText(log.note || ''); // Varsa eski notu getir
+    setEditText(log.note || '');
   };
 
   const saveNote = async (logId: string) => {
@@ -45,11 +47,56 @@ export default function NotesPage() {
       .eq('id', logId);
 
     if (!error) {
-      // Listeyi yerelde güncelle (Tekrar fetch atmaya gerek yok)
       setLogs(logs.map(log => log.id === logId ? { ...log, note: editText } : log));
       setEditingId(null);
     } else {
       alert("Hata: " + error.message);
+    }
+  };
+
+  const handleImageUpload = async (logId: string, file: File) => {
+    if (!currentUser) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Sadece resim dosyaları kabul edilir');
+      return;
+    }
+
+    setUploadingId(logId);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', currentUser.id);
+
+      const res = await fetch('/api/activity', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(logs.map(log => log.id === logId ? { ...log, image_url: data.url } : log));
+        alert('Resim yüklendi!');
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Yükleme hatası');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Yükleme başarısız');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const deleteImage = async (logId: string) => {
+    const { error } = await supabase
+      .from('activity_logs')
+      .update({ image_url: null })
+      .eq('id', logId);
+
+    if (!error) {
+      setLogs(logs.map(log => log.id === logId ? { ...log, image_url: null } : log));
     }
   };
 
@@ -107,7 +154,24 @@ export default function NotesPage() {
                 )}
               </div>
 
-              {/* Not Alanı */}
+              {/* RESİM ALANI */}
+              {log.image_url && (
+                <div className="mb-3 relative">
+                  <img 
+                    src={log.image_url} 
+                    alt="Antrenman" 
+                    className="w-full h-48 object-cover rounded-lg border border-neutral-700"
+                  />
+                  <button
+                    onClick={() => deleteImage(log.id)}
+                    className="absolute top-2 right-2 bg-red-900/80 hover:bg-red-900 p-2 rounded-full text-red-200 transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
+
+              {/* NOT ALANI */}
               {editingId === log.id ? (
                 <div className="animate-in fade-in">
                   <textarea
@@ -133,13 +197,34 @@ export default function NotesPage() {
                   </div>
                 </div>
               ) : (
-                <div 
-                  onClick={() => startEditing(log)} 
-                  className={`text-sm whitespace-pre-wrap cursor-pointer hover:bg-neutral-700/30 p-2 rounded-lg transition ${
-                    log.note ? 'text-neutral-300' : 'text-neutral-600 italic'
-                  }`}
-                >
-                  {log.note || "Antrenman notu eklemek için dokun..."}
+                <div>
+                  <div 
+                    onClick={() => startEditing(log)} 
+                    className={`text-sm whitespace-pre-wrap cursor-pointer hover:bg-neutral-700/30 p-2 rounded-lg transition ${
+                      log.note ? 'text-neutral-300' : 'text-neutral-600 italic'
+                    }`}
+                  >
+                    {log.note || "Antrenman notu eklemek için dokun..."}
+                  </div>
+                  
+                  {/* RESİM YÜKLEME */}
+                  <label className="block mt-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleImageUpload(log.id, e.target.files[0]);
+                        }
+                      }}
+                      disabled={uploadingId === log.id}
+                      className="hidden"
+                    />
+                    <div className="flex items-center justify-center gap-2 p-3 border border-dashed border-neutral-600 rounded-lg hover:border-blue-500 hover:bg-blue-900/10 cursor-pointer transition text-xs text-neutral-400 hover:text-blue-400">
+                      <ImageIcon size={14} />
+                      {uploadingId === log.id ? 'Yükleniyor...' : 'Resim Ekle'}
+                    </div>
+                  </label>
                 </div>
               )}
             </div>
