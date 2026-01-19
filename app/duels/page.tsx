@@ -38,7 +38,7 @@ export default function DuelsPage() {
         .order('created_at', { ascending: true });
 
       setAllUsers(usersData || []);
-      setIsLeader(usersData && usersData[0]?.id === userId);
+      setIsLeader((usersData && usersData[0]?.id === userId) || false);
 
       // Tüm düelloları getir
       const { data: duelsData } = await supabase

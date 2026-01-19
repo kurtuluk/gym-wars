@@ -21,6 +21,8 @@
 -- ========================================================= 
 -- 0. TEMİZLİK (Eski tabloları ve kuralları yok ediyoruz)
 -- =========================================================
+DROP TABLE IF EXISTS user_achievements CASCADE;
+DROP TABLE IF EXISTS raid_bosses CASCADE;
 DROP TABLE IF EXISTS bets CASCADE;
 DROP TABLE IF EXISTS boss_attacks CASCADE;
 DROP TABLE IF EXISTS boss_raids CASCADE;

@@ -251,7 +251,7 @@ export default function Dashboard() {
       }
 
       const data = await res.json();
-      const newBalance = (currentUser.coins || 0) + data.earnedCoins;
+      let newBalance = (currentUser.coins || 0) + data.earnedCoins;
 
       // Boss'a hasar ekle
       if (currentBoss && !currentBoss.is_defeated) {
