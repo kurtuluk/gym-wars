@@ -627,34 +627,6 @@ export default function Dashboard() {
            <button onClick={() => router.push('/duels')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><Swords size={18} className="text-fuchsia-400" /> <span className="text-[10px]">Düellolar</span></button>
            <button onClick={() => router.push('/court')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><Scale size={18} className="text-red-400" /> <span className="text-[10px]">Mahkeme</span></button>
         </div>
-                          // Ayarları kaydet
-                          const { error } = await supabase
-                             .from('users')
-                             .update({ streak_decay_mode: streakDecayMode })
-                             .eq('id', currentUser.id);
-                          
-                          if (!error) {
-                             const updated = { ...currentUser, streak_decay_mode: streakDecayMode };
-                             setCurrentUser(updated);
-                             localStorage.setItem('currentUser', JSON.stringify(updated));
-                             alert('Ayarlar kaydedildi!');
-                          }
-                          setShowSettings(false);
-                       }}
-                       className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-bold"
-                    >
-                       Kaydet
-                    </button>
-                    <button
-                       onClick={() => setShowSettings(false)}
-                       className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white py-2 rounded-lg font-bold"
-                    >
-                       Kapat
-                    </button>
-                 </div>
-              </div>
-           </div>
-        )}
       </div>
     </div>
   );
