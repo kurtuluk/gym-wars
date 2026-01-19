@@ -74,8 +74,8 @@ CREATE TABLE users (
   custom_title text,
   perm_king_icon boolean DEFAULT false,
   
-  -- Oyuncu Ayarları
-  streak_decay_mode text DEFAULT 'decrease',
+  -- Mahkeme Durumu
+  in_court_risk boolean DEFAULT false,
   
   -- Otomasyon Takibi
   last_weekly_process_date date,

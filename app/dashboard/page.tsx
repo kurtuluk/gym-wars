@@ -29,8 +29,6 @@ export default function Dashboard() {
   const [showBets, setShowBets] = useState(false); 
   const [betAmount, setBetAmount] = useState<number>(0);
   const [spinning, setSpinning] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [streakDecayMode, setStreakDecayMode] = useState<'decrease' | 'freeze'>('decrease');
   
   const [loading, setLoading] = useState(true);
   const [myStats, setMyStats] = useState({ gym: 0, cardio: 0 });
@@ -465,6 +463,29 @@ export default function Dashboard() {
 
       <div className="px-4 space-y-6">
         
+        {/* HAFTA BAŞLANDI MESAJI */}
+        {currentCycle === 3 && (
+          <div className="bg-gradient-to-r from-fuchsia-900/40 to-fuchsia-800/40 border border-fuchsia-500/50 rounded-2xl p-4 animate-pulse">
+            <p className="text-fuchsia-300 font-bold text-center flex items-center justify-center gap-2">
+              ⚔️ DÜELLO HAFTASI BAŞLADI! Savaş zamanı geldi!
+            </p>
+          </div>
+        )}
+        {currentCycle === 2 && (
+          <div className="bg-gradient-to-r from-red-900/40 to-red-800/40 border border-red-500/50 rounded-2xl p-4 animate-pulse">
+            <p className="text-red-300 font-bold text-center flex items-center justify-center gap-2">
+              👹 BOSS SAVAŞI BAŞLADI! Tüm güçleri birleştir!
+            </p>
+          </div>
+        )}
+        {currentCycle === 0 && (
+          <div className="bg-gradient-to-r from-purple-900/40 to-purple-800/40 border border-purple-500/50 rounded-2xl p-4 animate-pulse">
+            <p className="text-purple-300 font-bold text-center flex items-center justify-center gap-2">
+              💀 FINAL BOSS HAFTASI! İmsalı bir savaş!
+            </p>
+          </div>
+        )}
+        
         {/* KULLANICI KARTI */}
         <div className={`bg-gradient-to-br from-neutral-800 to-neutral-900 p-6 rounded-3xl shadow-xl relative overflow-hidden border border-neutral-700 
            ${currentUser?.has_neon_border ? 'border-2 border-blue-500 shadow-[0_0_15px_blue]' : ''}
@@ -600,56 +621,12 @@ export default function Dashboard() {
         )}
 
         {/* ALT MENÜ */}
-        <div className="pt-6 grid grid-cols-5 gap-2">
+        <div className="pt-6 grid grid-cols-4 gap-3">
            <button onClick={() => router.push('/notes')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><CalendarDays size={18} className="text-blue-400" /> <span className="text-[10px]">Günlük</span></button>
            <button onClick={() => router.push('/feed')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><MessageSquare size={18} className="text-green-400" /> <span className="text-[10px]">Soyunma</span></button>
            <button onClick={() => router.push('/duels')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><Swords size={18} className="text-fuchsia-400" /> <span className="text-[10px]">Düellolar</span></button>
            <button onClick={() => router.push('/court')} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><Scale size={18} className="text-red-400" /> <span className="text-[10px]">Mahkeme</span></button>
-           <button onClick={() => setShowSettings(true)} className="bg-neutral-800 border border-neutral-700 text-neutral-300 py-3 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-neutral-700 text-xs"><Monitor size={18} className="text-purple-400" /> <span className="text-[10px]">Ayarlar</span></button>
         </div>
-
-        {/* SETTINGS MODAL */}
-        {showSettings && (
-           <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-              <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 max-w-md w-full">
-                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Monitor size={20} className="text-purple-400" /> Ayarlar
-                 </h2>
-
-                 {/* STREAK AYARI */}
-                 <div className="bg-neutral-800/50 rounded-xl p-4 mb-4 border border-neutral-700">
-                    <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                       <Flame size={16} className="text-orange-500" /> Streak Kuralı
-                    </h3>
-                    <p className="text-xs text-neutral-400 mb-3">
-                       Hedefi tutturmadığın haftalarda streak'e ne olsun?
-                    </p>
-                    <div className="space-y-2">
-                       <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-700 cursor-pointer">
-                          <input
-                             type="radio"
-                             checked={streakDecayMode === 'decrease'}
-                             onChange={() => setStreakDecayMode('decrease')}
-                             className="w-4 h-4"
-                          />
-                          <span className="text-sm text-neutral-200">📉 Sıfıra Dönüş (Zor Mod)</span>
-                       </label>
-                       <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-700 cursor-pointer">
-                          <input
-                             type="radio"
-                             checked={streakDecayMode === 'freeze'}
-                             onChange={() => setStreakDecayMode('freeze')}
-                             className="w-4 h-4"
-                          />
-                          <span className="text-sm text-neutral-200">❄️ Sabit Kalır (Kolay Mod)</span>
-                       </label>
-                    </div>
-                 </div>
-
-                 {/* KAPATMA BUTONU */}
-                 <div className="flex gap-2">
-                    <button
-                       onClick={async () => {
                           // Ayarları kaydet
                           const { error } = await supabase
                              .from('users')

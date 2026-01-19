@@ -64,12 +64,9 @@ export async function POST(req: NextRequest) {
         if (userLogs.length >= 4) {
           newStreak += 1;
         } else {
-          // Hedefi tutturmadıysa, ayarlara göre davran
-          const decayMode = user.streak_decay_mode || 'decrease'; // default: decrease
-          if (decayMode === 'decrease') {
-            newStreak = 0; // Sıfıra dönüş (Zor Mod)
-          }
-          // 'freeze' modunda streak değişmez
+          // Hedefi tutturmadıysa streak sıfırlanır
+          // Ancak mahkeme oylaması sonrası karar verilir
+          newStreak = 0;
         }
 
         // Streak güncellemesi
@@ -80,7 +77,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Boss resetle (Ayda 1 kez - Pazartesi)
+    // 4. Mahkeme Mantığı: İkinci kez başarısız olanlar
+    // Eğer in_court_risk = true ve bu hafta da 4 gym yapmayanlar mahkeme açılır
+    for (const user of users) {
+      const userLogs = (logs || []).filter(
+        (l: any) => l.user_id === user.id && l.activity_type === 'gym'
+      );
+
+      if (user.in_court_risk && userLogs.length < 4) {
+        // İkinci kez başarısız - mahkeme açılır!
+        // Ceza kaydı ve voting açılır
+        await supabase.from('penalties').insert([
+          {
+            user_id: user.id,
+            penalty_text: '🔥 Streak riski: Oylar sonuç belirleyecek!',
+            week_start_date: thisWeekStart,
+            is_completed: false,
+          },
+        ]);
+      } else if (userLogs.length < 4) {
+        // İlk kez başarısız - riski işaretle
+        await supabase
+          .from('users')
+          .update({ in_court_risk: true })
+          .eq('id', user.id);
+      } else {
+        // Başarılı - riski kaldır
+        await supabase
+          .from('users')
+          .update({ in_court_risk: false })
+          .eq('id', user.id);
+      }
+    }
+
+    // 5. Boss resetle (Ayda 1 kez - Pazartesi)
     const isFirstMondayOfMonth = (date: Date) => {
       const d = new Date(date);
       const day = d.getDay();
@@ -111,7 +141,7 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
-    // 5. Kral atar
+    // 6. Kral atar
     if (!users[0]) {
       return NextResponse.json({ error: 'Lider bulunamadı' }, { status: 404 });
     }
@@ -134,7 +164,7 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
-    // 6. Sistem ödülü kaydet (spam önle)
+    // 7. Sistem ödülü kaydet (spam önle)
     const rewardKey = `weekly_process_${groupId}_${thisWeekStart}`;
     await supabase.from('system_rewards').insert([{ reward_key: rewardKey }]);
 

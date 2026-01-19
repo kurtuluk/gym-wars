@@ -210,12 +210,40 @@ export default function CourtPage() {
       </div>
 
       <div className="px-4 space-y-6">
-        {/* OYLAMA TAMAMLANDI MESAJI */}
+        {/* OYLAMA TAMAMLANDI - STREAK KARARI */}
         {allVotesComplete && (
-          <div className="bg-green-900/30 border border-green-500/50 rounded-2xl p-4">
-            <p className="text-green-400 font-bold text-center flex items-center justify-center gap-2">
-              ✅ Tüm oylar tamamlandı! Pazartesi mahkeme kapanacak.
+          <div className="bg-purple-900/40 border border-purple-500/50 rounded-2xl p-4 space-y-3">
+            <p className="text-purple-300 font-bold text-center flex items-center justify-center gap-2">
+              ✅ Tüm oylar tamamlandı!
             </p>
+            <p className="text-xs text-purple-200 text-center">
+              Aşağıdaki kişilerin streak'inin silinip silinmeyeceğine karar verin:
+            </p>
+            {allUsers.map((user) => {
+              const heroVotes = getVoteCount(user.id, 'hero');
+              const trollVotes = getVoteCount(user.id, 'troll');
+              const willStreakReset = trollVotes > heroVotes;
+              
+              return (
+                <div key={user.id} className="bg-neutral-800/50 rounded-lg p-3 border border-neutral-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-white">{user.username}</p>
+                      <p className="text-xs text-neutral-400">
+                        {heroVotes} Kahraman vs {trollVotes} Troll
+                      </p>
+                    </div>
+                    <div className={`px-3 py-1 rounded-lg font-bold text-sm ${
+                      willStreakReset 
+                        ? 'bg-red-900/30 text-red-300' 
+                        : 'bg-green-900/30 text-green-300'
+                    }`}>
+                      {willStreakReset ? '🔥 Streak Sıfırlanır' : '✅ Streak Korunur'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
