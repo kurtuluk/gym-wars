@@ -6,8 +6,42 @@ import {
   Trophy, Flame, Dumbbell, Heart, LogOut, Gavel, 
   ThumbsUp, ThumbsDown, Medal, CheckCircle, Skull, 
   Swords, MessageSquare, CalendarDays, ShoppingCart, Store, 
-  Calendar, Info, Crown, Star, Zap, Ghost, Gem, Tag, Monitor, Server, Banknote, AlertTriangle, TrendingUp, Dices, Scale
+  Calendar, Info, Crown, Star, Zap, Ghost, Gem, Tag, Monitor, Server, Banknote, AlertTriangle, TrendingUp, Dices, Scale, Settings
 } from 'lucide-react';
+
+// GERÇEKÇİ AVATAR LİSTESİ
+const AVATARS = [
+  { 
+    id: 1, 
+    name: "Arnold", 
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Arnold_Schwarzenegger_1974.jpg/800px-Arnold_Schwarzenegger_1974.jpg" 
+  },
+  { 
+    id: 2, 
+    name: "Ronnie", 
+    url: "https://fitnessvolt.com/wp-content/uploads/2019/04/ronnie-coleman.jpg" 
+  },
+  { 
+    id: 3, 
+    name: "Cbum", 
+    url: "https://manmaker.in/cdn/shop/articles/cbum-31-07-2024-0001.jpg?v=1722450546" 
+  },
+  { 
+    id: 4, 
+    name: "David Laid", 
+    url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeP-Qk-RrOJfSiy7vt3Y_HY4Jhah5qhOTtMA&s" 
+  },
+  { 
+    id: 5, 
+    name: "Ege Fitness", 
+    url: "https://ilerigazetesicomtr.teimg.com/crop/1280x720/ilerigazetesi-com-tr/uploads/2025/09/2025/09-eylul/02-eylul/ege-cinel-1.jpg"
+  },
+  { 
+    id: 6, 
+    name: "Gokalaf", 
+    url: "https://hwp.com.tr/wp-content/uploads/2024/12/gokalaf-1-1080x570.jpeg" 
+  },
+];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -26,7 +60,8 @@ export default function Dashboard() {
   // UI Durumları
   const [showStore, setShowStore] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
-  const [showBets, setShowBets] = useState(false); 
+  const [showBets, setShowBets] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [betAmount, setBetAmount] = useState<number>(0);
   const [spinning, setSpinning] = useState(false);
   
@@ -453,6 +488,131 @@ export default function Dashboard() {
          </div>
       )}
 
+      {/* AYARLAR MODALI */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-neutral-800 w-full max-w-md rounded-3xl border border-blue-600/50 p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setShowSettings(false)} className="absolute top-4 right-4 text-white"><LogOut/></button>
+            <h2 className="text-2xl font-bold text-blue-500 mb-4 flex items-center gap-2"><Settings/> AYARLAR</h2>
+            
+            <div className="space-y-4">
+              {/* PROFIL FOTOĞRAFI */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-neutral-400 uppercase">Profil Fotoğrafı URL</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="https://..." 
+                    defaultValue={currentUser?.avatar_url || DEFAULT_AVATAR}
+                    id="avatar-url"
+                    className="flex-1 bg-black/30 border border-neutral-600 rounded p-2 text-sm text-white placeholder-neutral-600"
+                  />
+                  <button 
+                    onClick={async () => {
+                      const url = (document.getElementById('avatar-url') as HTMLInputElement)?.value;
+                      if (!url) { alert("URL gir!"); return; }
+                      try {
+                        await supabase.from('users').update({ avatar_url: url }).eq('id', currentUser.id);
+                        setCurrentUser({ ...currentUser, avatar_url: url });
+                        localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, avatar_url: url }));
+                        alert("Fotoğraf güncellendi!");
+                      } catch (error) {
+                        alert("Hata oluştu");
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-bold"
+                  >
+                    Güncelle
+                  </button>
+                </div>
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500 bg-neutral-800 mx-auto mt-2">
+                  <img src={currentUser?.avatar_url || DEFAULT_AVATAR} className="w-full h-full object-cover"/>
+                </div>
+              </div>
+
+              {/* DEFAULT AVATARLAR */}
+              <div className="space-y-2 pt-4 border-t border-neutral-700">
+                <label className="text-xs font-bold text-neutral-400 uppercase">Spor Efsaneleri</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {AVATARS.map((avatar) => (
+                    <button 
+                      key={avatar.id} 
+                      onClick={async () => {
+                        try {
+                          await supabase.from('users').update({ avatar_url: avatar.url }).eq('id', currentUser.id);
+                          setCurrentUser({ ...currentUser, avatar_url: avatar.url });
+                          localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, avatar_url: avatar.url }));
+                          alert(`${avatar.name} seçildi!`);
+                        } catch (error) {
+                          alert("Hata oluştu");
+                        }
+                      }}
+                      className={`relative rounded-xl overflow-hidden border-2 transition hover:scale-105 h-20 ${currentUser?.avatar_url === avatar.url ? 'border-yellow-500 shadow-[0_0_10px_orange]' : 'border-neutral-600 opacity-60 hover:opacity-100'}`}
+                    >
+                      <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-[8px] text-center py-0.5 font-bold truncate px-1">
+                        {avatar.name}
+                      </div>
+                      {currentUser?.avatar_url === avatar.url && (
+                        <div className="absolute top-1 right-1 bg-yellow-500 rounded-full p-0.5">
+                          <CheckCircle size={12} className="text-black"/>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* PIN DEĞİŞTİRME */}
+              <div className="space-y-2 pt-4 border-t border-neutral-700">
+                <label className="text-xs font-bold text-neutral-400 uppercase">🔐 PIN Değiştir</label>
+                <input 
+                  type="text" 
+                  maxLength={4}
+                  pattern="\d{4}"
+                  placeholder="Eski PIN (4 hane)"
+                  id="old-pin"
+                  className="w-full bg-black/30 border border-neutral-600 rounded p-2 text-sm text-white placeholder-neutral-600 tracking-widest text-center font-mono"
+                />
+                <input 
+                  type="text" 
+                  maxLength={4}
+                  pattern="\d{4}"
+                  placeholder="Yeni PIN (4 hane)"
+                  id="new-pin"
+                  className="w-full bg-black/30 border border-neutral-600 rounded p-2 text-sm text-white placeholder-neutral-600 tracking-widest text-center font-mono"
+                />
+                <button 
+                  onClick={async () => {
+                    const oldPin = (document.getElementById('old-pin') as HTMLInputElement)?.value;
+                    const newPin = (document.getElementById('new-pin') as HTMLInputElement)?.value;
+                    
+                    if (!oldPin || !newPin) { alert("Tüm alanları doldur!"); return; }
+                    if (oldPin.length !== 4 || newPin.length !== 4) { alert("PIN 4 hane olmalı!"); return; }
+                    if (oldPin !== currentUser?.pin_code) { alert("Eski PIN yanlış!"); return; }
+                    if (oldPin === newPin) { alert("Yeni PIN eski PIN'den farklı olmalı!"); return; }
+                    
+                    try {
+                      await supabase.from('users').update({ pin_code: newPin }).eq('id', currentUser.id);
+                      setCurrentUser({ ...currentUser, pin_code: newPin });
+                      localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, pin_code: newPin }));
+                      alert("PIN başarıyla değiştirildi!");
+                      (document.getElementById('old-pin') as HTMLInputElement).value = '';
+                      (document.getElementById('new-pin') as HTMLInputElement).value = '';
+                    } catch (error) {
+                      alert("Hata oluştu");
+                    }
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-bold"
+                >
+                  PIN Değiştir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MEGA MAĞAZA MODALI (Kısaltılmış) */}
       {showStore && (
         <div className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
@@ -506,6 +666,7 @@ export default function Dashboard() {
               <button onClick={() => setShowBets(true)} className="flex items-center gap-1 bg-green-600/20 text-green-500 px-2 sm:px-3 py-1.5 rounded-full border border-green-600/50 text-xs font-bold animate-pulse whitespace-nowrap"><TrendingUp size={14}/> Bahis</button>
             )}
             <button onClick={() => router.push('/leaderboard')} className="flex items-center gap-1 bg-purple-600/20 text-purple-500 px-2 sm:px-3 py-1.5 rounded-full border border-purple-600/50 text-xs font-bold whitespace-nowrap"><Trophy size={14}/> Sıralama</button>
+            <button onClick={() => setShowSettings(true)} className="flex items-center gap-1 bg-blue-600/20 text-blue-500 px-2 sm:px-3 py-1.5 rounded-full border border-blue-600/50 text-xs font-bold whitespace-nowrap"><Settings size={14}/> Ayarlar</button>
          </div>
          <button onClick={() => {localStorage.removeItem('currentUser'); router.push('/')}} className="bg-neutral-800 p-2 rounded-full text-neutral-400"><LogOut size={16}/></button>
       </div>
