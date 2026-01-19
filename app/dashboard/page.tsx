@@ -36,6 +36,8 @@ export default function Dashboard() {
   // Sayaçlar
   const [dateStr, setDateStr] = useState('');
   const [currentCycle, setCurrentCycle] = useState(0); // 0, 1, 2, 3
+  const [weekInfo, setWeekInfo] = useState({ weekNum: 1, label: 'Normal Hafta' });
+  const [timeLeftDuel, setTimeLeftDuel] = useState('');
   const [timeLeftMonth, setTimeLeftMonth] = useState('');
 
   // --- SABİTLER ---
@@ -92,6 +94,13 @@ export default function Dashboard() {
     const weekNum = getWeekNumber(now);
     const cycle = weekNum % 4; 
     setCurrentCycle(cycle);
+    
+    let label = 'Normal Hafta';
+    if (cycle === 0) label = "FINAL BOSS";
+    else if (cycle === 1) label = "HAZIRLIK";
+    else if (cycle === 2) label = "BOSS SAVAŞI";
+    else if (cycle === 3) label = "DÜELLO";
+    setWeekInfo({ weekNum, label });
 
     const timer = setInterval(() => {
       const currentDate = new Date();
@@ -142,7 +151,7 @@ export default function Dashboard() {
         cardio: myWeekLogs.filter((l:any) => l.activity_type === 'cardio').length
       });
 
-      // Liderlik Tablosu
+      // Liderlik Tablosu (GÜNCELLENMİŞ EŞİTLİK MANTIĞI)
       let stats = [];
       if (activeTab === 'weekly') stats = calculateRanking(allUsersData || [], logs, thisWeekStartStr);
       else if (activeTab === 'monthly') stats = calculateRanking(allUsersData || [], logs, thisMonthStartStr);
@@ -172,6 +181,38 @@ export default function Dashboard() {
       }
     }
     setLoading(false);
+  };
+
+  // --- EŞİTLİK BOZMADAN SIRALAMA (TIE HANDLING) ---
+  const calculateRanking = (users: any[], logs: any[], startDate: string) => {
+    // 1. Puanları Hesapla
+    const sortedUsers = users.map(user => {
+      const userLogs = logs.filter((l: any) => l.user_id === user.id && l.activity_date >= startDate);
+      const gym = userLogs.filter((l: any) => l.activity_type === 'gym').length;
+      const cardio = userLogs.filter((l: any) => l.activity_type === 'cardio').length;
+      const score = gym + cardio;
+      return { ...user, score, gym, cardio, subText: `${gym} Gym + ${cardio} Kardiyo` };
+    }).sort((a, b) => b.score - a.score);
+
+    // 2. Rank Ata (Eşitlik durumunu gözeterek)
+    return sortedUsers.map((user, index) => {
+      let rank = 1;
+      if (index > 0) {
+        if (user.score === sortedUsers[index - 1].score) {
+          // Puanı bir üsttekiyle aynıysa, onun sırasını al
+          rank = sortedUsers[index - 1].rank;
+        } else {
+          // Değilse normal sıra (index + 1)
+          rank = index + 1;
+        }
+      }
+      // Not: map içinde önceki elemana (sortedUsers[index-1]) erişirken,
+      // önceki elemana atadığımız 'rank' değerini okumak için 'sortedUsers' dizisinin
+      // o anki haline güveniyoruz. Ancak map yeni dizi oluşturur.
+      // Bu yüzden trick yapıyoruz: Nesnenin kendisine rank atıyoruz.
+      user.rank = rank; 
+      return user;
+    });
   };
 
   // --- LİDERİN ÇARKI (DÜELLO BAŞLATMA) ---
@@ -229,6 +270,7 @@ export default function Dashboard() {
     }
   };
 
+  // --- SPOR EKLEME ---
   const addActivity = async (type: 'gym' | 'cardio') => {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
@@ -290,6 +332,7 @@ export default function Dashboard() {
     }
   };
 
+  // --- DİĞER FONKSİYONLAR ---
   const buyItem = async (itemType: string, cost: number, extraData?: string) => {
     if (currentUser.coins < cost) { alert("Yetersiz bakiye!"); return; }
     if (!confirm(`${cost} Coin harcanacak. Emin misin?`)) return;
@@ -331,15 +374,6 @@ export default function Dashboard() {
      await supabase.from('users').update({coins:newB}).eq('id',currentUser.id);
      setCurrentUser({...currentUser, coins:newB}); alert("Oynandı"); setBetAmount(0);
   };
-
-  const calculateRanking = (users: any[], logs: any[], startDate: string) => {
-    return users.map(user => {
-      const userLogs = logs.filter((l: any) => l.user_id === user.id && l.activity_date >= startDate);
-      const gym = userLogs.filter((l: any) => l.activity_type === 'gym').length;
-      const cardio = userLogs.filter((l: any) => l.activity_type === 'cardio').length;
-      return { ...user, score: gym + cardio, gym, cardio, subText: `${gym} Gym + ${cardio} Kardiyo` };
-    }).sort((a, b) => b.score - a.score).map((u, i) => ({...u, rank: i+1}));
-  };
   
   const checkWeeklyProgress = async (user: any, logs: any[], lastWeekStart: string, thisWeekStart: string) => {
       if (user.last_weekly_process_date !== thisWeekStart) {
@@ -354,6 +388,8 @@ export default function Dashboard() {
   const getNameClasses = (user: any) => {
     let classes = `font-bold text-sm flex items-center gap-2 ${user.name_color || 'text-white'}`;
     if (user.name_effect === 'rainbow') classes += ' bg-gradient-to-r from-red-500 via-green-500 to-blue-500 text-transparent bg-clip-text animate-pulse';
+    if (user.name_effect === 'glitch') classes += ' text-red-500 font-mono tracking-widest uppercase';
+    if (user.name_effect === 'ghost') classes += ' opacity-50 blur-[0.5px]';
     return classes;
   };
 
@@ -453,6 +489,7 @@ export default function Dashboard() {
       <div className="px-4 mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
          <div className="flex gap-1 flex-wrap justify-center sm:justify-start">
             <button onClick={() => setShowStore(true)} className="flex items-center gap-1 bg-yellow-600/20 text-yellow-500 px-2 sm:px-3 py-1.5 rounded-full border border-yellow-600/50 text-xs font-bold whitespace-nowrap"><ShoppingCart size={14}/> Mağaza</button>
+            {/* SADECE DÜELLO HAFTASINDA VE EŞLEŞME VARSA BAHİS BUTONU ÇIKAR */}
             {currentCycle === 3 && activeDuels.length > 0 && (
               <button onClick={() => setShowBets(true)} className="flex items-center gap-1 bg-green-600/20 text-green-500 px-2 sm:px-3 py-1.5 rounded-full border border-green-600/50 text-xs font-bold animate-pulse whitespace-nowrap"><TrendingUp size={14}/> Bahis</button>
             )}
@@ -591,15 +628,15 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3">
             {leaderboard.map((user, index) => (
-              <div key={user.id} className={`flex items-center justify-between p-4 bg-neutral-800 rounded-xl border border-neutral-700/50 ${index === 0 ? 'bg-gradient-to-r from-yellow-900/10 to-neutral-800' : ''}`}>
+              <div key={user.id} className={`flex items-center justify-between p-4 bg-neutral-800 rounded-xl border border-neutral-700/50 ${user.rank === 1 ? 'bg-gradient-to-r from-yellow-900/10 to-neutral-800 border-yellow-500/50' : ''}`}>
                 <div className="flex items-center gap-4">
-                  <div className={`w-8 h-8 flex items-center justify-center font-bold rounded-lg ${index === 0 ? 'bg-yellow-500 text-black' : 'bg-neutral-900 text-neutral-500'}`}>{index + 1}</div>
+                  <div className={`w-8 h-8 flex items-center justify-center font-bold rounded-lg ${user.rank === 1 ? 'bg-yellow-500 text-black' : 'bg-neutral-900 text-neutral-500'}`}>{user.rank}</div>
                   <div>
                     <p className={getNameClasses(user)}>{user.username} {user.status_emoji}</p>
                     <p className="text-[10px] text-neutral-400">{user.subText}</p>
                   </div>
                 </div>
-                {index === 0 && <Medal size={16} className="text-yellow-500"/>}
+                {user.rank === 1 && <Medal size={16} className="text-yellow-500"/>}
               </div>
             ))}
           </div>

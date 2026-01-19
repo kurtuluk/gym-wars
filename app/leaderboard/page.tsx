@@ -57,15 +57,25 @@ export default function LeaderboardPage() {
       } else if (activeTab === 'monthly') {
         stats = calculateRanking(usersData || [], logsData || [], thisMonthStart);
       } else {
-        // Streak
-        stats = (usersData || [])
+        // Streak - tie handling ile
+        const sorted = (usersData || [])
           .map((u) => ({
             ...u,
             score: u.initial_streak,
             subText: `${u.initial_streak} Hafta Streak`,
           }))
-          .sort((a, b) => b.score - a.score)
-          .map((u, i) => ({ ...u, rank: i + 1 }));
+          .sort((a, b) => b.score - a.score);
+        
+        stats = sorted.map((u, i) => {
+          let rank = 1;
+          for (let j = i - 1; j >= 0; j--) {
+            if (sorted[j].score > u.score) {
+              rank = j + 2;
+              break;
+            }
+          }
+          return { ...u, rank };
+        });
       }
 
       setLeaderboard(stats);

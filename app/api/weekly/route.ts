@@ -141,6 +141,33 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
+    // 5.5. Düello Haftası Başlıyorsa - Eşleşmeler Sıfırla
+    const weekNum = getWeekNumber(today);
+    const cycle = weekNum % 4;
+    
+    if (cycle === 3) {
+      // Düello haftası başladı - eski eşleşmeleri sil
+      const { data: oldDuels } = await supabase
+        .from('duels')
+        .select('id')
+        .eq('group_id', groupId);
+
+      if (oldDuels && oldDuels.length > 0) {
+        const duelIds = oldDuels.map(d => d.id);
+        // Bahisleri sil
+        await supabase
+          .from('bets')
+          .delete()
+          .in('duel_id', duelIds);
+      }
+
+      // Duelleri sil
+      await supabase
+        .from('duels')
+        .delete()
+        .eq('group_id', groupId);
+    }
+
     // 6. Kral atar
     if (!users[0]) {
       return NextResponse.json({ error: 'Lider bulunamadı' }, { status: 404 });
