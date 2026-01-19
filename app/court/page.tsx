@@ -86,12 +86,7 @@ export default function CourtPage() {
 
     setVotes(votesData || []);
 
-    // Cezaları getir
-    const { data: penaltiesData } = await supabase
-      .from('penalties')
-      .select('*')
-      .eq('week_start_date', weekStartStr);
-
+    // Cezaları setPenalties'e aktar
     setPenalties(penaltiesData || []);
 
     // Tüm oylar verildi mi kontrol et
